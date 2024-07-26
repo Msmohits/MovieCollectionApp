@@ -4,7 +4,7 @@ from django.urls import reverse
 from moviecollection.models import Collection, User
 from uuid import UUID
 
-collection_field_mapping = data = {
+collection_field_mapping = {
     "title": "Test Collection",
     "description": "My Movies",
     "movies": [
@@ -22,7 +22,7 @@ collection_field_mapping = data = {
 def test_collection_list_post(authenticated_client):
     url = reverse("collection_list")
     collection_field_mapping.update({"user": authenticated_client.auth["user_id"]})
-    response = authenticated_client.post(url, data, format="json")
+    response = authenticated_client.post(url, collection_field_mapping, format="json")
     assert response.status_code == status.HTTP_201_CREATED
     assert "collection_id" in response.data
     assert isinstance(response.data["collection_id"], UUID)
@@ -67,7 +67,7 @@ def test_put_collection_detail(authenticated_client):
         "collection_detail", args=[response.data.get("data", [])[0].get("id")]
     )
     collection_field_mapping.update({"title": "Updated Collection Name"})
-    response = authenticated_client.put(url, data, format="json")
+    response = authenticated_client.put(url, collection_field_mapping, format="json")
 
     assert response.status_code == status.HTTP_200_OK
     assert response.data["title"] == "Updated Collection Name"
