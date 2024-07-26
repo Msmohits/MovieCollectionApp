@@ -42,6 +42,11 @@ class Movie(BaseModel):
 
 class Collection(BaseModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    title = models.CharField(max_length=255, unique=True)
+    title = models.CharField(max_length=255)
     description = models.TextField()
     movies = models.ManyToManyField(Movie)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'title'], name='unique_user_title')
+        ]
