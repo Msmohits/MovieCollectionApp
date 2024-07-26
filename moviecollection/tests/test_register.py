@@ -11,12 +11,12 @@ def api_client():
 
 @pytest.mark.django_db
 def test_register_user_with_email(api_client):
-    url = reverse('register')
+    url = reverse("register")
     user_data = {
         "username": "testuser1",
         "email": "testuser@example.com",
-        "password": "testpassword"
+        "password": "testpassword",
     }
-    response = api_client.post(url, user_data, format='json')
+    response = api_client.post(url, user_data, format="json")
     assert response.status_code == status.HTTP_201_CREATED
-    assert 'access_token' in response.json()
+    assert "access_token" in response.json()

@@ -37,8 +37,8 @@ def remove_password_deco(func):
     def inner(request):
         response = func(request)
         for user in response.data:
-            if 'password' in user:
-                del user['password']
+            if "password" in user:
+                del user["password"]
         return response
-    return inner
 
+    return inner

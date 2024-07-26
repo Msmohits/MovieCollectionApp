@@ -24,15 +24,16 @@ def register(request):
     data = json.loads(request.body)
     try:
 
-        if 'email' not in data:
-            data['email'] = f"{data['username']}@gmail.com"
+        if "email" not in data:
+            data["email"] = f"{data['username']}@gmail.com"
         user = User.objects.create(**data)
         refresh = RefreshToken.for_user(user)
         return JsonResponse(
             {
                 "access_token": str(refresh.access_token),
                 # 'refresh_token': str(refresh),
-            }, status=status.HTTP_201_CREATED
+            },
+            status=status.HTTP_201_CREATED,
         )
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -48,7 +49,8 @@ def login(request):
             {
                 "access_token": str(refresh.access_token),
                 # 'refresh_token': str(refresh),
-            }
+            },
+            status=status.HTTP_200_OK,
         )
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -58,8 +60,11 @@ def login(request):
 @permission_classes([IsAuthenticated])
 @remove_password_deco
 def users(request):
-    users = User.objects.values()
-    return Response(users)
+    try:
+        users = User.objects.values()
+        return Response(users, status=status.HTTP_200_OK)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["GET"])

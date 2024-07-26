@@ -7,10 +7,11 @@ class SimpleMovieSerializer(serializers.ModelSerializer):
         model = Movie
         fields = "__all__"
 
+
 class SimpleMovieSerializer(serializers.ModelSerializer):
     class Meta:
         model = Movie
-        fields = ['id', 'title', 'description']
+        fields = ["id", "title", "description"]
 
 
 class CollectionSerializer(serializers.ModelSerializer):
