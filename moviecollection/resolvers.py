@@ -33,14 +33,12 @@ def third_part_api_handler(page):
         return JsonResponse({"error": str(e)})
 
 
-# def increase_request_count():
+def remove_password_deco(func):
+    def inner(request):
+        response = func(request)
+        for user in response.data:
+            if 'password' in user:
+                del user['password']
+        return response
+    return inner
 
-
-def increase_get_request_count():
-    get_request_count = cache.get("get_request_count", 0)
-    cache.set("get_request_count", get_request_count + 1, None)
-
-
-def increase_post_request_count():
-    post_request_count = cache.get("post_request_count", 0)
-    cache.set("post_request_count", post_request_count + 1, None)
