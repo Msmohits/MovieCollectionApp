@@ -7,7 +7,12 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_jwt.settings import api_settings
 from .models import Movie, Collection, User
-from .serializers import MovieSerializer, CollectionSerializer, SimpleCollectionSerializer, SimpleMovieSerializer
+from .serializers import (
+    MovieSerializer,
+    CollectionSerializer,
+    SimpleCollectionSerializer,
+    SimpleMovieSerializer,
+)
 from django.core.cache import cache
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -43,9 +48,14 @@ def register(request):
 def login(request):
     data = json.loads(request.body)
     try:
-        user = User.objects.filter(username=data.get("username"), password=data.get("password")).first()
-        if not user:  
-            return JsonResponse({"error": "Invalid credentials or user does not exit"}, status=status.HTTP_400_BAD_REQUEST)
+        user = User.objects.filter(
+            username=data.get("username"), password=data.get("password")
+        ).first()
+        if not user:
+            return JsonResponse(
+                {"error": "Invalid credentials or user does not exit"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         refresh = RefreshToken.for_user(user)
         return JsonResponse(
             {
@@ -88,7 +98,11 @@ def movie_list(request, page):
 @permission_classes([IsAuthenticated])
 def collection_list(request):
     if request.method == "POST":
-        request.data['user'] = request.auth['user_id'] if not request.data.get('user') else request.data.get('user')
+        request.data["user"] = (
+            request.auth["user_id"]
+            if not request.data.get("user")
+            else request.data.get("user")
+        )
         serializer = CollectionSerializer(data=request.data)
         if serializer.is_valid():
             collection = serializer.save(user=request.user)
@@ -108,7 +122,9 @@ def collection_list(request):
 @permission_classes([IsAuthenticated])
 def collection_detail(request, collection_id):
     try:
-        collection = Collection.objects.prefetch_related('movies').get(id=collection_id, user=request.user)
+        collection = Collection.objects.prefetch_related("movies").get(
+            id=collection_id, user=request.user
+        )
     except Collection.DoesNotExist:
         return Response(
             {"error": "Collection not found"}, status=status.HTTP_404_NOT_FOUND

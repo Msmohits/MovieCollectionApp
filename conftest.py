@@ -22,7 +22,7 @@ def api_client():
 @pytest.fixture
 def authenticated_client():
     client = APIClient()
-    user = User.objects.create_user(username='testuser', password='testpassword')
-    client.auth = {'user_id': user.id}
+    user = User.objects.create_user(username="testuser", password="testpassword")
+    client.auth = {"user_id": user.id}
     client.force_authenticate(user=user)
     return client

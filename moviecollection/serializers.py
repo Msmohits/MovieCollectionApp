@@ -2,7 +2,6 @@ from rest_framework import serializers
 from .models import Movie, Collection
 
 
-
 class SimpleCollectionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Collection
@@ -13,6 +12,7 @@ class SimpleMovieSerializer(serializers.ModelSerializer):
     collections = SimpleCollectionSerializer(
         source="collection_set", many=True, read_only=True
     )
+
     class Meta:
         model = Movie
         fields = "__all__"
@@ -26,6 +26,7 @@ class MovieSerializer(serializers.ModelSerializer):
 
 class CollectionSerializer(serializers.ModelSerializer):
     movies = MovieSerializer(many=True)
+
     class Meta:
         model = Collection
         fields = "__all__"

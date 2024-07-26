@@ -26,10 +26,12 @@ def test_register_user_with_email(api_client):
 @pytest.mark.django_db
 def test_users_view():
     client = APIClient()
-    user = User.objects.create_user(username='testuser1', password='testuser@example.com')
+    user = User.objects.create_user(
+        username="testuser1", password="testuser@example.com"
+    )
     client.force_authenticate(user=user)
-    url = reverse('users')
+    url = reverse("users")
     response = client.get(url)
     assert response.status_code == status.HTTP_200_OK
-    assert 'username' in response.data[0]
-    assert response.data[0]['username'] == 'testuser1'
+    assert "username" in response.data[0]
+    assert response.data[0]["username"] == "testuser1"
