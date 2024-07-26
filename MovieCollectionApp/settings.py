@@ -110,7 +110,8 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "MovieCollectionApp.wsgi.application"
+ASGI_APPLICATION = "MovieCollectionApp.asgi.application"
+# WSGI_APPLICATION = "MovieCollectionApp.wsgi.application"
 
 
 # Database

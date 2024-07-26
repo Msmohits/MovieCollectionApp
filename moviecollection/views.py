@@ -7,7 +7,12 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_jwt.settings import api_settings
 from .models import Movie, Collection, User
-from .serializers import UserSerializer, MovieSerializer, CollectionSerializer
+from .serializers import (
+    MovieSerializer,
+    CollectionSerializer,
+    SimpleCollectionSerializer,
+    SimpleMovieSerializer,
+)
 from django.core.cache import cache
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -15,54 +20,70 @@ import json
 from rest_framework_simplejwt.tokens import RefreshToken
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
-from .resolvers import third_part_api_handler
+from .resolvers import third_part_api_handler, remove_password_deco
+from django.forms.models import model_to_dict
 
 
 @api_view(["POST"])
 def register(request):
     data = json.loads(request.body)
     try:
+
+        if "email" not in data:
+            data["email"] = f"{data['username']}@gmail.com"
         user = User.objects.create(**data)
         refresh = RefreshToken.for_user(user)
         return JsonResponse(
             {
                 "access_token": str(refresh.access_token),
                 # 'refresh_token': str(refresh),
-            }
+            },
+            status=status.HTTP_201_CREATED,
         )
     except Exception as e:
-        return JsonResponse({"error": str(e)}, status=400)
+        return JsonResponse({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["POST"])
 def login(request):
     data = json.loads(request.body)
     try:
-        user = User.objects.filter(username=data.get("username")).first()
+        user = User.objects.filter(
+            username=data.get("username"), password=data.get("password")
+        ).first()
+        if not user:
+            return JsonResponse(
+                {"error": "Invalid credentials or user does not exit"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         refresh = RefreshToken.for_user(user)
         return JsonResponse(
             {
                 "access_token": str(refresh.access_token),
                 # 'refresh_token': str(refresh),
-            }
+            },
+            status=status.HTTP_200_OK,
         )
     except Exception as e:
-        return JsonResponse({"error": str(e)}, status=400)
+        return JsonResponse({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
+@remove_password_deco
 def users(request):
-    users = User.objects.values()
-    # serializer = UserSerializer(users, many=True)
-    return Response(users)
+    try:
+        users = User.objects.values()
+        return Response(users, status=status.HTTP_200_OK)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def collction_movies(request):
     movies = Movie.objects.prefetch_related("collection_set")
-    serializer = MovieSerializer(movies, many=True)
+    serializer = SimpleMovieSerializer(movies, many=True)
     return Response(serializer.data)
 
 
@@ -77,6 +98,11 @@ def movie_list(request, page):
 @permission_classes([IsAuthenticated])
 def collection_list(request):
     if request.method == "POST":
+        request.data["user"] = (
+            request.auth["user_id"]
+            if not request.data.get("user")
+            else request.data.get("user")
+        )
         serializer = CollectionSerializer(data=request.data)
         if serializer.is_valid():
             collection = serializer.save(user=request.user)
@@ -86,8 +112,7 @@ def collection_list(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     else:
         collections = Collection.objects.filter(user=request.user)
-        # collections = Collection.objects.all()
-        serializer = CollectionSerializer(collections, many=True)
+        serializer = SimpleCollectionSerializer(collections, many=True)
         return Response(
             {"is_success": True, "data": serializer.data}, status=status.HTTP_200_OK
         )
@@ -97,7 +122,9 @@ def collection_list(request):
 @permission_classes([IsAuthenticated])
 def collection_detail(request, collection_id):
     try:
-        collection = Collection.objects.get(id=collection_id, user=request.user)
+        collection = Collection.objects.prefetch_related("movies").get(
+            id=collection_id, user=request.user
+        )
     except Collection.DoesNotExist:
         return Response(
             {"error": "Collection not found"}, status=status.HTTP_404_NOT_FOUND
